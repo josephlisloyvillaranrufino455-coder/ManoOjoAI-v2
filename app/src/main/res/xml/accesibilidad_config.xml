@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<accessibility-service xmlns:android="http://android.com"
-    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewClicked"
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagReportViewIds|flagRetrieveInteractiveWindows|flagRequestEnhancedWebAccessibility"
-    android:canPerformGestures="true"
+    android:accessibilityFlags="flagDefault|flagRetrieveInteractiveWindows|flagReportViewIds"
     android:canRetrieveWindowContent="true"
-    android:canTakeScreenshot="true"
-    android:notificationTimeout="50" />
+    android:canPerformGestures="true"
+    android:notificationTimeout="50"
+    android:description="Control tactil y vision en vivo" />

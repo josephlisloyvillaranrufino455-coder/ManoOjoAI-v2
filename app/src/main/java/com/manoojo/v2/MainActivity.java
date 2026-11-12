@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
             faltantes.add(Manifest.permission.POST_NOTIFICATIONS);
         }
         if (!faltantes.isEmpty()) {
-            ActivityCompat.requestPermissions(this, faltantes.toArray(new String[]), 101);
+            ActivityCompat.requestPermissions(this, faltantes.toArray(new String[0]), 101);
         }
     }
 }

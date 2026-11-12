@@ -18,7 +18,7 @@ import java.util.List;
 public class CerebroAI {
     private static final String URL_GEMINI =
             "https://generativelanguage" + ".googleapis" + ".com/v1beta/models/"
-            + "gemini-3.5-flash-lite:generateContent";
+            + "gemini-2.5-flash-lite:generateContent";
 
     private static final List<String> historial = new ArrayList<>();
 

@@ -178,9 +178,20 @@ public class ControlAccesibilidadService extends AccessibilityService {
     }
 
 
-    public boolean tocarRapido(float x, float y) {
-        return ejecutarGesto(x, y, x, y, 80);
+         public boolean tocarRapido(float x, float y) {
+        BotonFlotanteService.tocarConCuerpoOjito(x, y, () -> {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return;
+            Path huella = new Path();
+            huella.moveTo(x, y);
+            huella.lineTo(x + 1.5f, y + 1.5f);
+            GestureDescription gesto = new GestureDescription.Builder()
+                    .addStroke(new GestureDescription.StrokeDescription(huella, 0, 125))
+                    .build();
+            dispatchGesture(gesto, null, null);
+        });
+        return true;
     }
+
 
     public boolean mantenerPresionado(float x, float y) {
         return ejecutarGesto(x, y, x, y, 850);
@@ -425,6 +436,89 @@ public class ControlAccesibilidadService extends AccessibilityService {
             });
             wmPuntero.addView(capa, p);
         });
+    }
+    public void grabarGestoCompletoUsuario(String nombreGesto, Runnable alTerminar) {
+        if (wmPuntero == null) return;
+        new Handler(Looper.getMainLooper()).post(() -> {
+            View lienzo = new View(this);
+            lienzo.setBackgroundColor(Color.argb(35, 56, 189, 248));
+            int tipo = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    ? WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+                    : WindowManager.LayoutParams.TYPE_PHONE;
+            WindowManager.LayoutParams p = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
+                    tipo, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                    PixelFormat.TRANSLUCENT);
+
+            final StringBuilder rutaPuntos = new StringBuilder();
+            final java.util.concurrent.atomic.AtomicLong tInicio = new java.util.concurrent.atomic.AtomicLong(0);
+
+            lienzo.setOnTouchListener((v, ev) -> {
+                int acc = ev.getActionMasked();
+                if (acc == MotionEvent.ACTION_DOWN) {
+                    tInicio.set(System.currentTimeMillis());
+                    rutaPuntos.setLength(0);
+                    rutaPuntos.append(ev.getRawX()).append(",").append(ev.getRawY());
+                    return true;
+                } else if (acc == MotionEvent.ACTION_MOVE) {
+                    rutaPuntos.append(";").append(ev.getRawX()).append(",").append(ev.getRawY());
+                    return true;
+                } else if (acc == MotionEvent.ACTION_UP) {
+                    rutaPuntos.append(";").append(ev.getRawX()).append(",").append(ev.getRawY());
+                    long dur = Math.max(90, Math.min(2500, System.currentTimeMillis() - tInicio.get()));
+                    try { wmPuntero.removeView(lienzo); } catch (Exception ignored) {}
+
+                    String pkg = (paqueteActivo == null || paqueteActivo.isEmpty()) ? "general" : paqueteActivo;
+                    getSharedPreferences("GestosAprendidosV2", Context.MODE_PRIVATE).edit()
+                            .putString(pkg + "::" + nombreGesto.toLowerCase(Locale.ROOT).trim(), dur + "|" + rutaPuntos)
+                            .apply();
+                    if (alTerminar != null) alTerminar.run();
+                    return true;
+                }
+                return false;
+            });
+            wmPuntero.addView(lienzo, p);
+        });
+    }
+
+    public boolean reproducirGestoAprendido(String frase) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false;
+        String pkg = (paqueteActivo == null || paqueteActivo.isEmpty()) ? "general" : paqueteActivo;
+        SharedPreferences prefs = getSharedPreferences("GestosAprendidosV2", Context.MODE_PRIVATE);
+        String limpia = frase.toLowerCase(Locale.ROOT).trim();
+
+        for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+            String k = entry.getKey();
+            if (k.startsWith(pkg + "::")) {
+                String nombre = k.substring((pkg + "::").length());
+                if (limpia.contains(nombre)) {
+                    String dato = String.valueOf(entry.getValue());
+                    int sep = dato.indexOf('|');
+                    if (sep > 0) {
+                        long dur = Long.parseLong(dato.substring(0, sep));
+                        String resto = dato.substring(sep + 1);
+                        java.util.StringTokenizer st = new java.util.StringTokenizer(resto, ";");
+                        Path path = new Path();
+                        boolean primero = true;
+                        while (st.hasMoreTokens()) {
+                            String par = st.nextToken();
+                            int coma = par.indexOf(',');
+                            if (coma > 0) {
+                                float px = Float.parseFloat(par.substring(0, coma));
+                                float py = Float.parseFloat(par.substring(coma + 1));
+                                if (primero) { path.moveTo(px, py); primero = false; }
+                                else path.lineTo(px, py);
+                            }
+                        }
+                        GestureDescription gd = new GestureDescription.Builder()
+                                .addStroke(new GestureDescription.StrokeDescription(path, 0, dur))
+                                .build();
+                        return dispatchGesture(gd, null, null);
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public void guardarBotonJuego(String pkg, String nombre, float x, float y) {

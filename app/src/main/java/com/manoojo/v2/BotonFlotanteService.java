@@ -78,7 +78,7 @@ public class BotonFlotanteService extends Service {
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = 50;
-        params.y = 260
+        params.y = 260;
                 paramsOjo = params;
 
         ojoView.setOnTouchListener(new View.OnTouchListener() {

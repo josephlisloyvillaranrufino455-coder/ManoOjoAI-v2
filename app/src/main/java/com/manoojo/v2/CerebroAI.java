@@ -98,7 +98,22 @@ public class CerebroAI {
                     os.write(cuerpo.toString().getBytes(StandardCharsets.UTF_8));
                 }
 
-                int code = con.getResponseCode();
+                                int code = con.getResponseCode();
+                if (code == 503 || code == 429) {
+                    Thread.sleep(1200);
+                    con = (HttpURLConnection) new URL(URL_GEMINI).openConnection();
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    con.setRequestProperty("x-goog-api-key", apiKey);
+                    con.setDoOutput(true);
+                    con.setConnectTimeout(18000);
+                    con.setReadTimeout(18000);
+                    try (OutputStream os2 = con.getOutputStream()) {
+                        os2.write(cuerpo.toString().getBytes(StandardCharsets.UTF_8));
+                    }
+                    code = con.getResponseCode();
+                }
+
                 BufferedReader br = new BufferedReader(new InputStreamReader(
                         code == 200 ? con.getInputStream() : con.getErrorStream(), StandardCharsets.UTF_8));
                 StringBuilder sb = new StringBuilder();
@@ -112,9 +127,12 @@ public class CerebroAI {
                             .getJSONObject(0).getString("text").replace("*", "").trim();
                     guardarEnMemoria(ordenUsuario, txt);
                     interpretarRespuesta(context, txt, callback);
+                } else if (code == 503) {
+                    responderSoloVoz(callback, "El servidor de inteligencia está un poco ocupado ahora mismo, por favor repíteme la orden en unos segundos.");
                 } else {
                     responderSoloVoz(callback, "Disculpa, tuve un inconveniente con el servidor código " + code);
                 }
+
             } catch (Exception e) {
                 responderSoloVoz(callback, "Disculpa, parece que la señal de internet tardó demasiado en responder.");
             }

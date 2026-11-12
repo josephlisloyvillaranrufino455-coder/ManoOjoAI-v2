@@ -177,23 +177,6 @@ public class ControlAccesibilidadService extends AccessibilityService {
         return dispatchGesture(gesto, null, null);
     }
 
-    public boolean ejecutarMultiDedos(float[][] inicios, float[][] fines, long duracionMs) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false;
-        int cantidad = Math.min(inicios.length, 10);
-        GestureDescription.Builder builder = new GestureDescription.Builder();
-        for (int i = 0; i < cantidad; i++) {
-            float fx = (fines != null && i < fines.length) ? fines[i] : inicios[i];
-            float fy = (fines != null && i < fines.length) ? fines[i] : inicios[i];
-            animarDedoVisual(inicios[i], inicios[i], fx, fy, duracionMs, false);
-            Path p = new Path();
-            p.moveTo(inicios[i], inicios[i]);
-            if (fines != null && i < fines.length) {
-                p.lineTo(fx, fy);
-            }
-            builder.addStroke(new GestureDescription.StrokeDescription(p, 0, duracionMs));
-        }
-        return dispatchGesture(builder.build(), null, null);
-    }
 
     public boolean tocarRapido(float x, float y) {
         return ejecutarGesto(x, y, x, y, 80);

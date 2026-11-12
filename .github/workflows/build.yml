@@ -15,11 +15,12 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Descargar Gradle 8.4 y Compilar APK
-        run: |
-          wget -q https://gradle.org
-          unzip -q gradle-8.4-bin.zip
-          ./gradle-8.4/bin/gradle assembleDebug
+      - name: Configurar Gradle 8.4
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.4'
+      - name: Compilar APK
+        run: gradle assembleDebug
       - name: Subir APK listo
         uses: actions/upload-artifact@v4
         with:

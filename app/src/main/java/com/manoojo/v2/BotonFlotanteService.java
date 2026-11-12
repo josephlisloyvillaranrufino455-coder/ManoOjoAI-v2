@@ -466,7 +466,7 @@ public class BotonFlotanteService extends Service {
                     CerebroAI.procesar(this,
                             "Analiza y memoriza todos los detalles, nombres, números y contexto de esta imagen para recordármelos en el futuro. Confirma brevemente qué memorizaste.",
                             "Captura visual solicitada por el usuario", b64,
-                            (vozTexto, acciones) -> hablarCulto(vozTexto));
+                            (acciones,vozTexto) -> hablarCulto(vozTexto));
                 });
                 return true;
             }

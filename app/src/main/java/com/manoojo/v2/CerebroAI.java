@@ -1,4 +1,4 @@
-package com.manoojo.v2;
+spackage com.manoojo.v2;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,7 +18,8 @@ import java.util.List;
 public class CerebroAI {
     private static final String URL_GEMINI =
             "https://generativelanguage" + ".googleapis" + ".com/v1beta/models/"
-            + "gemini-2.5-flash-lite:generateContent";
+            + "gemini-3-flash-preview:generateContent";
+
 
     private static final List<String> historial = new ArrayList<>();
 

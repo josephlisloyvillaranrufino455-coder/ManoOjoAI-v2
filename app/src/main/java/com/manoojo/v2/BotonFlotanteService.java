@@ -37,6 +37,9 @@ import java.util.List;
 import java.util.Locale;
 
 public class BotonFlotanteService extends Service {
+    public static BotonFlotanteService instancia;
+    public WindowManager.LayoutParams paramsOjo;
+
     private WindowManager windowManager;
     private OjoFlotanteView ojoView;
     private SpeechRecognizer speechRecognizer;
@@ -57,6 +60,8 @@ public class BotonFlotanteService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        instancia = this;
+
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         iniciarNotificacionActiva();
 
@@ -73,7 +78,8 @@ public class BotonFlotanteService extends Service {
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = 50;
-        params.y = 260;
+        params.y = 260
+                paramsOjo = params;
 
         ojoView.setOnTouchListener(new View.OnTouchListener() {
             private int initialX, initialY;
@@ -424,6 +430,67 @@ public class BotonFlotanteService extends Service {
                 return true;
             }
         }
+        if (orden.contains("partanse en cuatro") || orden.contains("pártanse en cuatro")
+                || orden.contains("partete en cuatro") || orden.contains("pártete en cuatro")
+                || orden.contains("dividete en cuatro") || orden.contains("divídete en cuatro")) {
+            partirOjitoEnCuatro();
+            programarEscucha(400);
+            return true;
+        }
+
+        if (orden.equals("presiona aquí") || orden.equals("presiona aqui") || orden.equals("toca aquí") || orden.equals("toca aqui")) {
+            if (paramsOjo != null) {
+                srv.tocarRapido(paramsOjo.x + 65f, paramsOjo.y + 65f);
+                programarEscucha(400);
+                return true;
+            }
+        }
+
+        if (orden.startsWith("memorizate ") || orden.startsWith("memorízate ") || orden.startsWith("recuerda esto") || orden.startsWith("guarda esto")) {
+            String detalle = orden.replaceFirst("^(memor[ií]zate|recuerda|guarda)\\s*", "").trim();
+
+            if (detalle.contains("gesto")) {
+                String nombreGesto = detalle.replace("este gesto", "").replace("el gesto", "").replace("gesto", "").trim();
+                if (nombreGesto.isEmpty()) nombreGesto = "gesto personalizado";
+                final String nombreFinal = nombreGesto;
+                hablarCulto("Con gusto. Realiza ahora mismo el gesto en la pantalla para memorizarlo.");
+                srv.grabarGestoCompletoUsuario(nombreFinal, () -> {
+                    hablarCulto("Listo, ya memoricé el gesto " + nombreFinal + ".");
+                });
+                return true;
+            }
+
+            if (detalle.contains("imagen") || detalle.contains("pantalla") || detalle.contains("foto")) {
+                hablarCulto("Observando y memorizando esta imagen.");
+                srv.capturarPantallaEnVivo(b64 -> {
+                    CerebroAI.procesar(this,
+                            "Analiza y memoriza todos los detalles, nombres, números y contexto de esta imagen para recordármelos en el futuro. Confirma brevemente qué memorizaste.",
+                            "Captura visual solicitada por el usuario", b64,
+                            (vozTexto, acciones) -> hablarCulto(vozTexto));
+                });
+                return true;
+            }
+
+            if (detalle.contains("letra") || detalle.contains("texto") || detalle.contains("frase")) {
+                String contenido = detalle.replaceFirst("^(esta letra|este texto|esta frase|la letra|el texto)\\s*:?\\s*", "").trim();
+                String textoAGuardar = contenido.isEmpty() ? srv.obtenerMapaPantalla() : contenido;
+                CerebroAI.guardarRecuerdoDirecto(this, "Texto/Letra memorizada: " + textoAGuardar);
+                hablarCulto("Perfecto, ya dejé esa letra bien guardada en mi memoria.");
+                return true;
+            }
+
+            String contextoPantalla = srv.obtenerMapaPantalla();
+            String extra = detalle.replace("esto", "").replace("todo", "").trim();
+            String paqueteMemo = (!extra.isEmpty() ? "Nota: " + extra + " | " : "") + "Pantalla: " + contextoPantalla;
+            CerebroAI.guardarRecuerdoDirecto(this, paqueteMemo);
+            hablarCulto("Listo, ya lo memoricé todo con éxito.");
+            return true;
+        }
+
+        if (srv.reproducirGestoAprendido(orden)) {
+            programarEscucha(400);
+            return true;
+        }
 
         String mapa = srv.obtenerMapaPantalla();
         boolean esJuego = mapa.contains("sin texto visible") || orden.contains("ves en pantalla") || orden.contains("que ves") || orden.contains("qué ves");
@@ -502,7 +569,86 @@ public class BotonFlotanteService extends Service {
 
         manejador.postDelayed(() -> ejecutarSecuenciaAcciones(acciones, indice + 1, alTerminar), 450);
     }
+    public static void tocarConCuerpoOjito(float x, float y, Runnable toqueReal) {
+        if (instancia == null || instancia.ojoView == null || instancia.windowManager == null || instancia.paramsOjo == null) {
+            if (toqueReal != null) toqueReal.run();
+            return;
+        }
+        instancia.manejador.post(() -> {
+            try {
+                final int origX = instancia.paramsOjo.x;
+                final int origY = instancia.paramsOjo.y;
+                final int mitad = 65;
 
+                instancia.paramsOjo.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+                instancia.paramsOjo.x = (int) (x - mitad);
+                instancia.paramsOjo.y = (int) (y - mitad);
+                instancia.windowManager.updateViewLayout(instancia.ojoView, instancia.paramsOjo);
+
+                instancia.ojoView.animate().scaleX(0.82f).scaleY(0.82f).setDuration(85).withEndAction(() -> {
+                    if (toqueReal != null) toqueReal.run();
+                    instancia.ojoView.animate().scaleX(1f).scaleY(1f).setDuration(105).start();
+                }).start();
+
+                instancia.manejador.postDelayed(() -> {
+                    try {
+                        instancia.paramsOjo.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+                        instancia.paramsOjo.x = origX;
+                        instancia.paramsOjo.y = origY;
+                        instancia.windowManager.updateViewLayout(instancia.ojoView, instancia.paramsOjo);
+                    } catch (Exception ignored) {}
+                }, 420);
+            } catch (Exception e) {
+                if (toqueReal != null) toqueReal.run();
+            }
+        });
+    }
+
+    public void partirOjitoEnCuatro() {
+        if (ojoView == null || windowManager == null) return;
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float w = dm.widthPixels;
+        float h = dm.heightPixels;
+
+        ojoView.animate().alpha(0.25f).scaleX(0.7f).scaleY(0.7f).setDuration(220).start();
+        int tipoVentana = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                : WindowManager.LayoutParams.TYPE_PHONE;
+
+        final List<OjoFlotanteView> fragmentos = new ArrayList<>();
+        float d1x = w * 0.28f, d1y = h * 0.35f;
+        float d2x = w * 0.72f, d2y = h * 0.35f;
+        float d3x = w * 0.28f, d3y = h * 0.65f;
+        float d4x = w * 0.72f, d4y = h * 0.65f;
+
+        for (int i = 0; i < 4; i++) {
+            float dx = (i == 0 || i == 2) ? d1x : d2x;
+            float dy = (i == 0 || i == 1) ? d1y : d3y;
+            OjoFlotanteView mini = new OjoFlotanteView(this);
+            mini.setOjoAbierto(true);
+            WindowManager.LayoutParams mp = new WindowManager.LayoutParams(
+                    84, 84, tipoVentana,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                    PixelFormat.TRANSLUCENT);
+            mp.gravity = Gravity.TOP | Gravity.START;
+            mp.x = (int) (dx - 42);
+            mp.y = (int) (dy - 42);
+            windowManager.addView(mini, mp);
+            mini.setScaleX(0.2f);
+            mini.setScaleY(0.2f);
+            mini.animate().scaleX(1f).scaleY(1f).setDuration(260).start();
+            fragmentos.add(mini);
+        }
+
+        manejador.postDelayed(() -> {
+            for (OjoFlotanteView mini : fragmentos) {
+                mini.animate().scaleX(0.1f).scaleY(0.1f).alpha(0f).setDuration(240).withEndAction(() -> {
+                    try { windowManager.removeView(mini); } catch (Exception ignored) {}
+                }).start();
+            }
+            ojoView.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(260).start();
+        }, 2500);
+    }
     @Override
     public void onDestroy() {
         activo = false;

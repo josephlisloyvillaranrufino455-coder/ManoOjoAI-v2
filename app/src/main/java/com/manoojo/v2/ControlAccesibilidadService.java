@@ -69,10 +69,9 @@ public class ControlAccesibilidadService extends AccessibilityService {
         instancia = null;
     }
 
-    private int[] obtenerTamanoPantalla() {
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        return new int[]{dm.widthPixels, dm.heightPixels};
-    }
+        private int anchoPantalla() { return getResources().getDisplayMetrics().widthPixels; }
+    private int altoPantalla() { return getResources().getDisplayMetrics().heightPixels; }
+
 
     public void actualizarMapaEnVivo() {
         AccessibilityNodeInfo raiz = getRootInActiveWindow();
@@ -203,87 +202,99 @@ public class ControlAccesibilidadService extends AccessibilityService {
     public boolean mantenerPresionado(float x, float y) {
         return ejecutarGesto(x, y, x, y, 850);
     }
-    public void gestoSalirInicio() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.50f, wh * 0.96f, wh * 0.50f, wh * 0.55f, 260);
+        public void gestoSalirInicio() {
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.50f, h * 0.96f, w * 0.50f, h * 0.55f, 260);
         performGlobalAction(GLOBAL_ACTION_HOME);
     }
 
     public void gestoRecientes() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.50f, wh * 0.96f, wh * 0.50f, wh * 0.50f, 520);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.50f, h * 0.96f, w * 0.50f, h * 0.50f, 520);
         new Handler(Looper.getMainLooper()).postDelayed(() -> performGlobalAction(GLOBAL_ACTION_RECENTS), 540);
     }
 
     public void gestoAtras() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(15f, wh * 0.52f, wh * 0.45f, wh * 0.52f, 240);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(15f, h * 0.52f, w * 0.45f, h * 0.52f, 240);
         performGlobalAction(GLOBAL_ACTION_BACK);
     }
 
     public void gestoNotificaciones() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.25f, 25f, wh * 0.25f, wh * 0.55f, 320);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.25f, 25f, w * 0.25f, h * 0.55f, 320);
         performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
     }
 
     public void gestoCentroControl() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.80f, 25f, wh * 0.80f, wh * 0.55f, 320);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.80f, 25f, w * 0.80f, h * 0.55f, 320);
         performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS);
     }
 
     public void deslizarArriba() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.50f, wh * 0.76f, wh * 0.50f, wh * 0.20f, 360);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.50f, h * 0.76f, w * 0.50f, h * 0.20f, 360);
     }
 
     public void deslizarAbajo() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.50f, wh * 0.24f, wh * 0.50f, wh * 0.80f, 360);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.50f, h * 0.24f, w * 0.50f, h * 0.80f, 360);
     }
 
     public void deslizarIzquierda() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.88f, wh * 0.50f, wh * 0.12f, wh * 0.50f, 380);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.88f, h * 0.50f, w * 0.12f, h * 0.50f, 380);
     }
 
     public void deslizarDerecha() {
-        int[] wh = obtenerTamanoPantalla();
-        ejecutarGesto(wh * 0.12f, wh * 0.50f, wh * 0.88f, wh * 0.50f, 380);
+        float w = anchoPantalla(), h = altoPantalla();
+        ejecutarGesto(w * 0.12f, h * 0.50f, w * 0.88f, h * 0.50f, 380);
     }
 
     public void acercarZoom() {
-        int[] wh = obtenerTamanoPantalla();
-        float[][] ini = {{wh * 0.44f, wh * 0.50f}, {wh * 0.56f, wh * 0.50f}};
-        float[][] fin = {{wh * 0.15f, wh * 0.50f}, {wh * 0.85f, wh * 0.50f}};
-        ejecutarMultiDedos(ini, fin, 320);
+        float w = anchoPantalla(), h = altoPantalla();
+        GestureDescription.Builder b = new GestureDescription.Builder();
+        Path p1 = new Path(); p1.moveTo(w * 0.44f, h * 0.50f); p1.lineTo(w * 0.15f, h * 0.50f);
+        Path p2 = new Path(); p2.moveTo(w * 0.56f, h * 0.50f); p2.lineTo(w * 0.85f, h * 0.50f);
+        animarDedoVisual(w * 0.44f, h * 0.50f, w * 0.15f, h * 0.50f, 320, false);
+        animarDedoVisual(w * 0.56f, h * 0.50f, w * 0.85f, h * 0.50f, 320, false);
+        b.addStroke(new GestureDescription.StrokeDescription(p1, 0, 320));
+        b.addStroke(new GestureDescription.StrokeDescription(p2, 0, 320));
+        dispatchGesture(b.build(), null, null);
     }
 
     public void alejarZoom() {
-        int[] wh = obtenerTamanoPantalla();
-        float[][] ini = {{wh * 0.15f, wh * 0.50f}, {wh * 0.85f, wh * 0.50f}};
-        float[][] fin = {{wh * 0.44f, wh * 0.50f}, {wh * 0.56f, wh * 0.50f}};
-        ejecutarMultiDedos(ini, fin, 320);
+        float w = anchoPantalla(), h = altoPantalla();
+        GestureDescription.Builder b = new GestureDescription.Builder();
+        Path p1 = new Path(); p1.moveTo(w * 0.15f, h * 0.50f); p1.lineTo(w * 0.44f, h * 0.50f);
+        Path p2 = new Path(); p2.moveTo(w * 0.85f, h * 0.50f); p2.lineTo(w * 0.56f, h * 0.50f);
+        animarDedoVisual(w * 0.15f, h * 0.50f, w * 0.44f, h * 0.50f, 320, false);
+        animarDedoVisual(w * 0.85f, h * 0.50f, w * 0.56f, h * 0.50f, 320, false);
+        b.addStroke(new GestureDescription.StrokeDescription(p1, 0, 320));
+        b.addStroke(new GestureDescription.StrokeDescription(p2, 0, 320));
+        dispatchGesture(b.build(), null, null);
     }
 
     public void accionMultiDedos(int numDedos, String direccion) {
-        int[] wh = obtenerTamanoPantalla();
+        float w = anchoPantalla(), h = altoPantalla();
         int n = Math.max(1, Math.min(numDedos, 10));
-        float[][] ini = new float[n];
-        float[][] fin = new float[n];
+        GestureDescription.Builder b = new GestureDescription.Builder();
         for (int i = 0; i < n; i++) {
-            float x = (wh * 0.15f) + (i * ((wh * 0.70f) / Math.max(1, n - 1)));
-            float y = wh * 0.50f;
-            ini[i] = x; ini[i] = y;
-            fin[i] = x; fin[i] = y;
-            if ("ARRIBA".equals(direccion)) { ini[i] = wh * 0.76f; fin[i] = wh * 0.20f; }
-            else if ("ABAJO".equals(direccion)) { ini[i] = wh * 0.24f; fin[i] = wh * 0.80f; }
-            else if ("IZQUIERDA".equals(direccion)) fin[i] = Math.max(50f, x - (wh * 0.55f));
-            else if ("DERECHA".equals(direccion)) fin[i] = Math.min(wh - 50f, x + (wh * 0.55f));
+            float x1 = (w * 0.15f) + (i * ((w * 0.70f) / Math.max(1, n - 1)));
+            float y1 = h * 0.50f;
+            float x2 = x1, y2 = y1;
+            if ("ARRIBA".equals(direccion)) { y1 = h * 0.76f; y2 = h * 0.20f; }
+            else if ("ABAJO".equals(direccion)) { y1 = h * 0.24f; y2 = h * 0.80f; }
+            else if ("IZQUIERDA".equals(direccion)) x2 = Math.max(50f, x1 - (w * 0.55f));
+            else if ("DERECHA".equals(direccion)) x2 = Math.min(w - 50f, x1 + (w * 0.55f));
+            animarDedoVisual(x1, y1, x2, y2, 380, false);
+            Path p = new Path(); p.moveTo(x1, y1); p.lineTo(x2, y2);
+            b.addStroke(new GestureDescription.StrokeDescription(p, 0, 380));
         }
-        ejecutarMultiDedos(ini, fin, 380);
+        dispatchGesture(b.build(), null, null);
     }
+
 
     public boolean tocarElementoOIcono(String objetivo) {
         AccessibilityNodeInfo raiz = getRootInActiveWindow();

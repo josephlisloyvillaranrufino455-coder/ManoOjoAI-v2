@@ -15,8 +15,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
       - name: Generar Gradle Wrapper y Compilar APK
         run: |
           gradle wrapper --gradle-version 8.2

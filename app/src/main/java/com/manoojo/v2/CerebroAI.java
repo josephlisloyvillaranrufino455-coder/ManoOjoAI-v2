@@ -199,4 +199,17 @@ public class CerebroAI {
         String actualizado = actuales.isEmpty() ? "- " + nuevoDato : actuales + "\n- " + nuevoDato;
         prefs.edit().putString("recuerdos_especiales", actualizado).apply();
     }
+        public static void guardarRecuerdoDirecto(Context context, String dato) {
+        try {
+            if (dato == null || dato.trim().isEmpty()) return;
+            SharedPreferences prefs = context.getSharedPreferences("MemoriaPermanenteV2", Context.MODE_PRIVATE);
+            String actuales = prefs.getString("recuerdos_especiales", "");
+            String fecha = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(new java.util.Date());
+            String entrada = "- [" + fecha + "] " + dato.trim();
+            String actualizado = actuales.isEmpty() ? entrada : actuales + "\n" + entrada;
+            if (actualizado.length() > 4000) actualizado = actualizado.substring(actualizado.length() - 4000);
+            prefs.edit().putString("recuerdos_especiales", actualizado).apply();
+        } catch (Exception ignored) {}
+    }
+
 }

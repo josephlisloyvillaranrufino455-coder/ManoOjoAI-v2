@@ -1,4 +1,4 @@
-spackage com.manoojo.v2;
+package com.manoojo.v2;
 
 import android.content.Context;
 import android.content.SharedPreferences;

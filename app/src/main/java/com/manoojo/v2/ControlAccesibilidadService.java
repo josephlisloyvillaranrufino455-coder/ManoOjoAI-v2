@@ -420,3 +420,55 @@ public class ControlAccesibilidadService extends AccessibilityService {
             capa.setOnTouchListener((v, event) -> {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     float rx = event.getRawX();
+                                        float ry = event.getRawY();
+                    try { wmPuntero.removeView(capa); } catch (Exception ignored) {}
+                    guardarBotonJuego(paqueteActivo, nombreBoton, rx, ry);
+                    animarDedoVisual(rx, ry, rx, ry, 100, true);
+                    callback.alGrabarBoton(nombreBoton, rx, ry);
+                    return true;
+                }
+                return false;
+            });
+            wmPuntero.addView(capa, p);
+        });
+    }
+
+    public void guardarBotonJuego(String pkg, String nombre, float x, float y) {
+        if (pkg == null || pkg.isEmpty()) pkg = "general";
+        SharedPreferences prefs = getSharedPreferences("BotonesJuegosV2", Context.MODE_PRIVATE);
+        prefs.edit().putString(pkg + "::" + nombre.toLowerCase(Locale.ROOT).trim(), x + "," + y).apply();
+    }
+
+    public boolean ejecutarBotonJuegoSiExiste(String fraseUsuario) {
+        if (paqueteActivo == null || paqueteActivo.isEmpty()) return false;
+        SharedPreferences prefs = getSharedPreferences("BotonesJuegosV2", Context.MODE_PRIVATE);
+        String limpia = fraseUsuario.toLowerCase(Locale.ROOT).trim();
+        for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+            String clave = entry.getKey();
+            if (clave.startsWith(paqueteActivo + "::")) {
+                String nombreBoton = clave.substring((paqueteActivo + "::").length());
+                if (limpia.equals(nombreBoton) || limpia.endsWith(" " + nombreBoton) || limpia.endsWith(" " + nombreBoton + "es") || limpia.startsWith(nombreBoton + " ")) {
+                    String[] xy = String.valueOf(entry.getValue()).split(",");
+                    if (xy.length == 2) {
+                        tocarRapido(Float.parseFloat(xy[0]), Float.parseFloat(xy[1]));
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public String listarBotonesDeJuegoActual() {
+        if (paqueteActivo == null || paqueteActivo.isEmpty()) return "";
+        SharedPreferences prefs = getSharedPreferences("BotonesJuegosV2", Context.MODE_PRIVATE);
+        StringBuilder sb = new StringBuilder();
+        for (String clave : prefs.getAll().keySet()) {
+            if (clave.startsWith(paqueteActivo + "::")) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(clave.substring((paqueteActivo + "::").length()));
+            }
+        }
+        return sb.toString();
+    }
+}

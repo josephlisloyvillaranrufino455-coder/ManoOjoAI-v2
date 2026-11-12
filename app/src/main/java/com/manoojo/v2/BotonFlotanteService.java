@@ -390,6 +390,40 @@ public class BotonFlotanteService extends Service {
         if (orden.contains("reproduce") || orden.contains("pon musica") || orden.contains("pon música")) {
             modoMusica = true;
         }
+               if (orden.contains("desliza hacia arriba") || orden.contains("desliza arriba") || orden.equals("sube") || orden.equals("siguiente")) {
+            srv.deslizarArriba();
+            programarEscucha(400);
+            return true;
+        }
+        if (orden.contains("desliza hacia abajo") || orden.contains("desliza abajo") || orden.equals("baja") || orden.equals("anterior")) {
+            srv.deslizarAbajo();
+            programarEscucha(400);
+            return true;
+        }
+        if (orden.contains("desliza hacia la izquierda") || orden.contains("desliza izquierda") || orden.contains("a la izquierda")) {
+            srv.deslizarIzquierda();
+            programarEscucha(400);
+            return true;
+        }
+        if (orden.contains("desliza hacia la derecha") || orden.contains("desliza derecha") || orden.contains("a la derecha")) {
+            srv.deslizarDerecha();
+            programarEscucha(400);
+            return true;
+        }
+        if (orden.startsWith("presiona ") || orden.startsWith("toca ") || orden.startsWith("pulsa ")) {
+            String objetivo = orden.replaceFirst("^(presiona|toca|pulsa)\\s+", "").trim();
+            if (!objetivo.isEmpty() && srv.tocarElementoOIcono(objetivo)) {
+                programarEscucha(400);
+                return true;
+            }
+        }
+        if (orden.startsWith("mantén presionado ") || orden.startsWith("manten presionado ")) {
+            String objetivo = orden.replaceFirst("^mant[eé]n presionado\\s+", "").trim();
+            if (!objetivo.isEmpty() && srv.mantenerElemento(objetivo)) {
+                programarEscucha(400);
+                return true;
+            }
+        }
 
         String mapa = srv.obtenerMapaPantalla();
         boolean esJuego = mapa.contains("sin texto visible") || orden.contains("ves en pantalla") || orden.contains("que ves") || orden.contains("qué ves");
